@@ -11,6 +11,7 @@ namespace TimesheetSystem.Controllers
         {
             _timesheetService = timesheetService;
         }
+
         public async Task<IActionResult> Index(string userId = "user1", DateTime? weekStart = null)
         {
             weekStart ??= TimesheetService.GetWeekStart(DateTime.Today);
@@ -25,6 +26,7 @@ namespace TimesheetSystem.Controllers
             };
             return View(viewModel);
         }
+
         [HttpGet]
         public IActionResult Create(string userId = "user1")
         {
@@ -35,6 +37,7 @@ namespace TimesheetSystem.Controllers
             };
             return View(model);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TimesheetEntryCreateModel model)
@@ -62,6 +65,7 @@ namespace TimesheetSystem.Controllers
                 return View(model);
             }
         }
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -81,6 +85,7 @@ namespace TimesheetSystem.Controllers
             ViewBag.EntryId = id;
             return View(model);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, TimesheetEntryCreateModel model)
@@ -114,6 +119,7 @@ namespace TimesheetSystem.Controllers
                 return View(model);
             }
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id, string userId)

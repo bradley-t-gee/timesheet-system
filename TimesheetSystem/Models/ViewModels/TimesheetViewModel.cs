@@ -6,8 +6,8 @@ namespace TimesheetSystem.Models.ViewModels
     {
         public string UserId { get; set; } = string.Empty;
         public DateTime WeekStartDate { get; set; }
-        public List<TimesheetEntry> Entries { get; set; } = new();
-        public Dictionary<string, decimal> ProjectTotals { get; set; } = new();
+        public List<TimesheetEntry> Entries { get; set; } = [];
+        public Dictionary<string, decimal> ProjectTotals { get; set; } = [];
         public decimal WeekTotal => Entries.Sum(e => e.Hours);
     }
 
