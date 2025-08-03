@@ -127,5 +127,35 @@ namespace TimesheetSystem.Tests
             var result = await _service.AddEntryAsync(entry);
             Assert.Equal(hours, result.Hours);
         }
+
+        [Fact]
+        public async Task GetAllUserIdsAsync_ReturnsDistinctUserIds()
+        {
+            // Arrange
+            await _service.AddEntryAsync(new TimesheetEntry { UserId = "user1", ProjectId = "PROJ-001", Date = DateTime.Today, Hours = 8.0m });
+            await _service.AddEntryAsync(new TimesheetEntry { UserId = "user2", ProjectId = "PROJ-002", Date = DateTime.Today, Hours = 4.0m });
+            await _service.AddEntryAsync(new TimesheetEntry { UserId = "user1", ProjectId = "PROJ-003", Date = DateTime.Today, Hours = 2.0m });
+
+            // Act
+            var result = await _service.GetAllUserIdsAsync();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains("user1", result);
+            Assert.Contains("user2", result);
+        }
+
+        [Fact]
+        public async Task GetEntriesForUserAndWeekAsync_EmptyUserId_ReturnsEmpty()
+        {
+            // Arrange
+            await _service.AddEntryAsync(new TimesheetEntry { UserId = "user1", ProjectId = "PROJ-001", Date = DateTime.Today, Hours = 8.0m });
+
+            // Act
+            var result = await _service.GetEntriesForUserAndWeekAsync("", DateTime.Today);
+
+            // Assert
+            Assert.Empty(result);
+        }
     }
 }

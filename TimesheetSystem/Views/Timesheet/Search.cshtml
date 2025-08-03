@@ -1,0 +1,160 @@
+@model TimesheetSearchViewModel
+@{
+    ViewData["Title"] = "Timesheet Search";
+}
+
+<div class="container">
+    <h2>Timesheet System</h2>
+
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Search Timesheets</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Search" method="post">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="UserId" class="form-label"></label>
+                            <input asp-for="UserId" class="form-control" placeholder="Enter User ID" />
+                            <span asp-validation-for="UserId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="WeekStartDate" class="form-label"></label>
+                            <input asp-for="WeekStartDate" type="date" class="form-control" />
+                            <span asp-validation-for="WeekStartDate" class="text-danger"></span>
+                            <small class="form-text text-muted">Will automatically adjust to start of week
+                                (Monday)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label class="form-label">&nbsp;</label> <!-- Spacer for alignment -->
+                            <div>
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <a asp-action="Create" asp-route-userId="@Model.UserId" class="btn btn-success">Add New
+                                    Entry</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    @if (Model.Entries.Any() || Model.HasSearched)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h5>Results for @Model.UserId - @Model.WeekRange</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Entries.Any())
+                {
+                    <!-- Entries Table -->
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Project</th>
+                                <th>Hours</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.Entries)
+                            {
+                                <tr>
+                                    <td>@entry.Date.ToString("MMM dd, yyyy")</td>
+                                    <td>@entry.ProjectId</td>
+                                    <td>@entry.Hours</td>
+                                    <td>@entry.Description</td>
+                                    <td>
+                                        <a asp-action="Edit" asp-route-id="@entry.Id" class="btn btn-sm btn-secondary">Edit</a>
+                                        <form asp-action="Delete" method="post" style="display:inline;"
+                                            onsubmit="return confirm('Are you sure?')">
+                                            <input type="hidden" name="id" value="@entry.Id" />
+                                            <input type="hidden" name="userId" value="@Model.UserId" />
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <!-- Summary Section -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Project Totals</h6>
+                            @if (Model.ProjectTotals.Any())
+                            {
+                                <ul class="list-group">
+                                    @foreach (var total in Model.ProjectTotals.OrderBy(p => p.Key))
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span><strong>@total.Key</strong></span>
+                                            <span class="badge bg-primary">@total.Value hours</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No project totals to display</p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Week Total</h5>
+                                    <h3 class="text-primary">@Model.WeekTotal hours</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <h6>No timesheet entries found</h6>
+                        <p>No entries found for user <strong>@Model.UserId</strong> during the week of
+                            <strong>@Model.WeekRange</strong>.
+                        </p>
+                        <a asp-action="Create" asp-route-userId="@Model.UserId" class="btn btn-primary">Add First Entry</a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Auto-focus on User ID field when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const userIdInput = document.querySelector('#UserId');
+            if (userIdInput && !userIdInput.value) {
+                userIdInput.focus();
+            }
+        });
+
+        // Set today's date as default if no date selected
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateInput = document.querySelector('#WeekStartDate');
+            if (dateInput && !dateInput.value) {
+                const today = new Date();
+                dateInput.value = today.toISOString().split('T')[0];
+            }
+        });
+    </script>
+}

@@ -111,5 +111,29 @@ namespace TimesheetSystem.Services
             var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
             return date.AddDays(-1 * diff).Date;
         }
+
+        // Method to get all unique user IDs (for potential dropdown)
+        public Task<List<string>> GetAllUserIdsAsync()
+        {
+            var userIds = _entries
+                .Select(e => e.UserId)
+                .Distinct()
+                .OrderBy(u => u)
+                .ToList();
+
+            return Task.FromResult(userIds);
+        }
+
+        // Method to get date range for all entries (for potential date validation)
+        public Task<(DateTime? earliest, DateTime? latest)> GetDateRangeAsync()
+        {
+            if (!_entries.Any())
+                return Task.FromResult<(DateTime?, DateTime?)>((null, null));
+
+            var earliest = _entries.Min(e => e.Date);
+            var latest = _entries.Max(e => e.Date);
+
+            return Task.FromResult<(DateTime?, DateTime?)>((earliest, latest));
+        }
     }
 }

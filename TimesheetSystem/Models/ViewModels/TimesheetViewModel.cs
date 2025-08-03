@@ -1,16 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using TimesheetSystem.ValidationAttributes;
 
 namespace TimesheetSystem.Models.ViewModels
 {
-    public class TimesheetViewModel
-    {
-        public string UserId { get; set; } = string.Empty;
-        public DateTime WeekStartDate { get; set; }
-        public List<TimesheetEntry> Entries { get; set; } = [];
-        public Dictionary<string, decimal> ProjectTotals { get; set; } = [];
-        public decimal WeekTotal => Entries.Sum(e => e.Hours);
-    }
-
     public class TimesheetEntryCreateModel
     {
         [Required]
@@ -20,6 +12,7 @@ namespace TimesheetSystem.Models.ViewModels
         public string ProjectId { get; set; } = string.Empty;
 
         [Required]
+        [NoFutureDate(ErrorMessage = "Date cannot be in the future.")]
         public DateTime Date { get; set; } = DateTime.Today;
 
         [Required]

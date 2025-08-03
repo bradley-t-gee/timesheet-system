@@ -12,27 +12,48 @@ namespace TimesheetSystem.Controllers
             _timesheetService = timesheetService;
         }
 
-        public async Task<IActionResult> Index(string userId = "user1", DateTime? weekStart = null)
+        [HttpGet]
+        public IActionResult Search()
         {
-            weekStart ??= TimesheetService.GetWeekStart(DateTime.Today);
-            var entries = await _timesheetService.GetEntriesForUserAndWeekAsync(userId, weekStart.Value);
-            var projectTotals = await _timesheetService.GetProjectTotalsForUserAndWeekAsync(userId, weekStart.Value);
-            var viewModel = new TimesheetViewModel
+            // Return empty search form on initial load
+            var searchModel = new TimesheetSearchViewModel
             {
-                UserId = userId,
-                WeekStartDate = weekStart.Value,
-                Entries = entries,
-                ProjectTotals = projectTotals
             };
-            return View(viewModel);
+
+            return View(searchModel);
+        }
+
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Search(TimesheetSearchViewModel searchModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(searchModel);
+            }
+
+            // Ensure we're using the start of the week
+            var weekStart = TimesheetService.GetWeekStart(searchModel.WeekStartDate);
+
+            // Get filtered data
+            var entries = await _timesheetService.GetEntriesForUserAndWeekAsync(searchModel.UserId, weekStart);
+            var projectTotals = await _timesheetService.GetProjectTotalsForUserAndWeekAsync(searchModel.UserId, weekStart);
+
+            // Update search model with results
+            searchModel.WeekStartDate = weekStart;
+            searchModel.Entries = entries;
+            searchModel.ProjectTotals = projectTotals;
+
+            // Mark that a search was performed
+            searchModel.HasSearched = true;
+
+            return View(searchModel);
         }
 
         [HttpGet]
-        public IActionResult Create(string userId = "user1")
+        public IActionResult Create()
         {
             var model = new TimesheetEntryCreateModel
             {
-                UserId = userId,
                 Date = DateTime.Today
             };
             return View(model);
@@ -57,7 +78,11 @@ namespace TimesheetSystem.Controllers
                     Description = model.Description
                 };
                 await _timesheetService.AddEntryAsync(entry);
-                return RedirectToAction(nameof(Index), new { userId = model.UserId });
+                return RedirectToAction(nameof(Search), new
+                {
+                    userId = model.UserId,
+                    weekStartDate = model.Date.ToString("yyyy-MM-dd")
+                });
             }
             catch (InvalidOperationException ex)
             {
@@ -110,7 +135,11 @@ namespace TimesheetSystem.Controllers
                 {
                     return NotFound();
                 }
-                return RedirectToAction(nameof(Index), new { userId = model.UserId });
+                return RedirectToAction(nameof(Search), new
+                {
+                    userId = model.UserId,
+                    weekStartDate = model.Date.ToString("yyyy-MM-dd")
+                });
             }
             catch (InvalidOperationException ex)
             {
@@ -125,7 +154,12 @@ namespace TimesheetSystem.Controllers
         public async Task<IActionResult> Delete(int id, string userId)
         {
             await _timesheetService.DeleteEntryAsync(id);
-            return RedirectToAction(nameof(Index), new { userId });
+            var weekStartDate = Request.Form["weekStartDate"].ToString();
+            return RedirectToAction(nameof(Search), new
+            {
+                userId,
+                weekStartDate
+            });
         }
     }
 }
