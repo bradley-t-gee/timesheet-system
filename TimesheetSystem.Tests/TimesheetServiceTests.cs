@@ -129,6 +129,13 @@ namespace TimesheetSystem.Tests
         }
 
         [Fact]
+        public async Task DeleteEntryAsync_InvalidId_ReturnsFalse()
+        {
+            var result = await _service.DeleteEntryAsync(999);
+            Assert.False(result);
+        }
+
+        [Fact]
         public async Task UpdateEntryAsync_UpdatesValues()
         {
             var entry = new TimesheetEntry
@@ -156,6 +163,16 @@ namespace TimesheetSystem.Tests
             Assert.Equal("PROJ-002", result!.ProjectId);
             Assert.Equal(6, result.Hours);
             Assert.Equal("Updated", result.Description);
+        }
+
+        [Fact]
+        public async Task UpdateEntryAsync_InvalidId_ReturnsNull()
+        {
+            var entry = CreateStandardEntry();
+
+            var result = await _service.UpdateEntryAsync(999, entry);
+
+            Assert.Null(result);
         }
     }
 }
