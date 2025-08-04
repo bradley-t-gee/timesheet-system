@@ -12,7 +12,7 @@ namespace TimesheetSystem.Models.ViewModels
         public string ProjectId { get; set; } = string.Empty;
 
         [Required]
-        [NoFutureDate(ErrorMessage = "Date cannot be in the future.")]
+        [NoFutureDate]
         public DateTime Date { get; set; } = DateTime.Today;
 
         [Required]

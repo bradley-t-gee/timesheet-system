@@ -50,7 +50,7 @@
     {
         <div class="card">
             <div class="card-header">
-                <h5>Results for @Model.UserId - @Model.WeekRange</h5>
+                <h5>Results for user @Model.UserId - on week @Model.WeekRange</h5>
             </div>
             <div class="card-body">
                 @if (Model.Entries.Any())
@@ -142,18 +142,9 @@
     <script>
         // Auto-focus on User ID field when page loads
         document.addEventListener('DOMContentLoaded', function () {
-            const userIdInput = document.querySelector('#UserId');
+            const userIdInput = document.querySelector('[name="UserId"]');
             if (userIdInput && !userIdInput.value) {
                 userIdInput.focus();
-            }
-        });
-
-        // Set today's date as default if no date selected
-        document.addEventListener('DOMContentLoaded', function () {
-            const dateInput = document.querySelector('#WeekStartDate');
-            if (dateInput && !dateInput.value) {
-                const today = new Date();
-                dateInput.value = today.toISOString().split('T')[0];
             }
         });
     </script>

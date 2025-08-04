@@ -6,33 +6,21 @@ namespace TimesheetSystem.Services
     {
         private readonly List<TimesheetEntry> _entries = [];
         private int _nextId = 1;
+        private const string DuplicateEntryError = "An entry for this user, project, and date already exists.";
 
-        public Task<TimesheetEntry> AddEntryAsync(TimesheetEntry entry)
+        public async Task<TimesheetEntry> AddEntryAsync(TimesheetEntry entry)
         {
             ArgumentNullException.ThrowIfNull(entry);
 
-            // if (string.IsNullOrWhiteSpace(entry.UserId) || string.IsNullOrWhiteSpace(entry.ProjectId))
-            // {
-            //     throw new ArgumentException("UserId and ProjectId cannot be null or empty.");
-            // }
-            // if (entry.Date == default)
-            // {
-            //     throw new ArgumentException("Date must be a valid date.");
-            // }
-            // if (entry.Hours <= 0)
-            // {
-            //     throw new ArgumentException("Hours must be greater than zero.");
-            // }
-
             // Check for duplicates before adding
-            if (HasDuplicateEntryAsync(entry.UserId, entry.ProjectId, entry.Date).Result)
+            if (await HasDuplicateEntryAsync(entry.UserId, entry.ProjectId, entry.Date))
             {
-                throw new InvalidOperationException("An entry for this user, project, and date already exists.");
+                throw new InvalidOperationException(DuplicateEntryError);
             }
 
             entry.Id = _nextId++;
             _entries.Add(entry);
-            return Task.FromResult(entry);
+            return entry;
         }
 
         public Task<TimesheetEntry?> GetEntryAsync(int id)
@@ -41,16 +29,16 @@ namespace TimesheetSystem.Services
             return Task.FromResult(entry);
         }
 
-        public Task<TimesheetEntry?> UpdateEntryAsync(int id, TimesheetEntry updatedEntry)
+        public async Task<TimesheetEntry?> UpdateEntryAsync(int id, TimesheetEntry updatedEntry)
         {
             var existingEntry = _entries.FirstOrDefault(e => e.Id == id);
             if (existingEntry == null)
-                return Task.FromResult<TimesheetEntry?>(null);
+                return null;
 
             // Check for duplicates when updating (exclude current entry)
-            if (HasDuplicateEntryAsync(updatedEntry.UserId, updatedEntry.ProjectId, updatedEntry.Date, id).Result)
+            if (await HasDuplicateEntryAsync(updatedEntry.UserId, updatedEntry.ProjectId, updatedEntry.Date, id))
             {
-                throw new InvalidOperationException("An entry for this user, project, and date already exists.");
+                throw new InvalidOperationException(DuplicateEntryError);
             }
 
             existingEntry.UserId = updatedEntry.UserId;
@@ -59,7 +47,7 @@ namespace TimesheetSystem.Services
             existingEntry.Hours = updatedEntry.Hours;
             existingEntry.Description = updatedEntry.Description;
 
-            return Task.FromResult<TimesheetEntry?>(existingEntry);
+            return existingEntry;
         }
 
         public Task<bool> DeleteEntryAsync(int id)
@@ -84,9 +72,8 @@ namespace TimesheetSystem.Services
             return Task.FromResult(entries);
         }
 
-        public Task<Dictionary<string, decimal>> GetProjectTotalsForUserAndWeekAsync(string userId, DateTime weekStart)
+        public Task<Dictionary<string, decimal>> GetProjectTotalsAsync(List<TimesheetEntry> entries)
         {
-            var entries = GetEntriesForUserAndWeekAsync(userId, weekStart).Result;
             var projectTotals = entries
                 .GroupBy(e => e.ProjectId)
                 .ToDictionary(g => g.Key, g => g.Sum(e => e.Hours));
@@ -110,30 +97,6 @@ namespace TimesheetSystem.Services
         {
             var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
             return date.AddDays(-1 * diff).Date;
-        }
-
-        // Method to get all unique user IDs (for potential dropdown)
-        public Task<List<string>> GetAllUserIdsAsync()
-        {
-            var userIds = _entries
-                .Select(e => e.UserId)
-                .Distinct()
-                .OrderBy(u => u)
-                .ToList();
-
-            return Task.FromResult(userIds);
-        }
-
-        // Method to get date range for all entries (for potential date validation)
-        public Task<(DateTime? earliest, DateTime? latest)> GetDateRangeAsync()
-        {
-            if (!_entries.Any())
-                return Task.FromResult<(DateTime?, DateTime?)>((null, null));
-
-            var earliest = _entries.Min(e => e.Date);
-            var latest = _entries.Max(e => e.Date);
-
-            return Task.FromResult<(DateTime?, DateTime?)>((earliest, latest));
         }
     }
 }

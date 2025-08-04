@@ -16,13 +16,11 @@ namespace TimesheetSystem.Controllers
         public IActionResult Search()
         {
             // Return empty search form on initial load
-            var searchModel = new TimesheetSearchViewModel
-            {
-            };
-
+            var searchModel = new TimesheetSearchViewModel();
             return View(searchModel);
         }
 
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Search(TimesheetSearchViewModel searchModel)
         {
@@ -36,7 +34,7 @@ namespace TimesheetSystem.Controllers
 
             // Get filtered data
             var entries = await _timesheetService.GetEntriesForUserAndWeekAsync(searchModel.UserId, weekStart);
-            var projectTotals = await _timesheetService.GetProjectTotalsForUserAndWeekAsync(searchModel.UserId, weekStart);
+            var projectTotals = await _timesheetService.GetProjectTotalsAsync(entries);
 
             // Update search model with results
             searchModel.WeekStartDate = weekStart;
@@ -52,10 +50,7 @@ namespace TimesheetSystem.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var model = new TimesheetEntryCreateModel
-            {
-                Date = DateTime.Today
-            };
+            var model = new TimesheetEntryCreateModel();
             return View(model);
         }
 
@@ -78,11 +73,7 @@ namespace TimesheetSystem.Controllers
                     Description = model.Description
                 };
                 await _timesheetService.AddEntryAsync(entry);
-                return RedirectToAction(nameof(Search), new
-                {
-                    userId = model.UserId,
-                    weekStartDate = model.Date.ToString("yyyy-MM-dd")
-                });
+                return RedirectToAction(nameof(Search));
             }
             catch (InvalidOperationException ex)
             {
@@ -135,11 +126,7 @@ namespace TimesheetSystem.Controllers
                 {
                     return NotFound();
                 }
-                return RedirectToAction(nameof(Search), new
-                {
-                    userId = model.UserId,
-                    weekStartDate = model.Date.ToString("yyyy-MM-dd")
-                });
+                return RedirectToAction(nameof(Search));
             }
             catch (InvalidOperationException ex)
             {
