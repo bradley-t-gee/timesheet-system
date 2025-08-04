@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using TimesheetSystem.ValidationAttributes;
 
 namespace TimesheetSystem.Models.ViewModels
 {
@@ -10,7 +11,7 @@ namespace TimesheetSystem.Models.ViewModels
 
         [Required]
         [Display(Name = "Week Starting")]
-        [DataType(DataType.Date)]
+        [NoFutureDate]
         public DateTime WeekStartDate { get; set; } = DateTime.Today;
 
         // Results
